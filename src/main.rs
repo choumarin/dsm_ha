@@ -19,6 +19,10 @@ struct Args {
     /// USB device info file
     #[arg(long)]
     usb_file: String,
+
+    /// Port to listen on
+    #[arg(long)]
+    port: u16,
 }
 
 fn handle_client(mut stream: TcpStream, machine: &str, usb_file: &str) {
@@ -77,7 +81,7 @@ fn main() -> std::io::Result<()> {
     SimpleLogger::new().init().unwrap();
 
     info!("Starting listener");
-    let listener = TcpListener::bind("0.0.0.0:14402")?;
+    let listener = TcpListener::bind(("0.0.0.0", args.port))?;
     info!("Listener started");
     // accept connections and process them serially
     for stream in listener.incoming() {
