@@ -29,24 +29,25 @@ fn handle_client(mut stream: TcpStream, machine: &str, usb_file: &str) {
     info!("Got a connection, reattaching usb");
     let out = Command::new("virsh")
         .args(["detach-device", machine, "--file", usb_file])
+        .output();
+    if out.is_err() {
+        debug!("failed to detach: {out:?}")
+    } else if !out.unwrap().stderr.is_empty() {
+        debug!("failed to detach: output empty")
+    }
+
+    thread::sleep(Duration::from_secs(5));
+    let out = Command::new("virsh")
+        .args(["attach-device", machine, "--file", usb_file])
         .output()
-        .expect("failed to detach usb");
+        .expect("failed to attach usb");
     debug!("{out:?}");
     if !out.stderr.is_empty() {
         stream.write_all("ohnoes".as_bytes()).unwrap_or_default();
     } else {
-        thread::sleep(Duration::from_secs(5));
-        let out = Command::new("virsh")
-            .args(["attach-device", machine, "--file", usb_file])
-            .output()
-            .expect("failed to attach usb");
-        debug!("{out:?}");
-        if !out.stderr.is_empty() {
-            stream.write_all("ohnoes".as_bytes()).unwrap_or_default();
-        } else {
-            stream.write_all("kthxbye".as_bytes()).unwrap_or_default();
-        }
+        stream.write_all("kthxbye".as_bytes()).unwrap_or_default();
     }
+
     stream.shutdown(Shutdown::Both).unwrap_or(());
     // This forces 60s before accepting the next connection.
     thread::sleep(time::Duration::from_secs(60));

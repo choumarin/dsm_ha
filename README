@@ -1,0 +1,4 @@
+notes for self
+- compile for x86/64
+- scp with -O
+- the task is started via the scheduled task directly in the DSM UI
